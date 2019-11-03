@@ -3,15 +3,22 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from pymongo import MongoClient
 from urllib.parse import quote
+import os
 
 app = Flask(__name__)
-account_sid = 'AC4f7b4dedf3f45eb446c208f8ae506b25'
-auth_token = '50b93029678586704718f2b5ec59dd79'
+account_sid = os.environ['TWILIO_ACCOUNT_SID']
+print("account_sid:", account_sid)
+auth_token = os.environ['TWILIO_AUTH_TOKEN']
+print("auth_token:", auth_token)
 tw_client = Client(account_sid, auth_token)
 
-
-mdb_client = MongoClient("mongodb+srv://djelci01:{0}@omnisms-1l7x0.mongodb.net/test?retryWrites=true&w=majority".format(quote("DwNX3nHNbb@Kh@N")))
+mdb_pw = os.environ['MONGODB_ATLAS_PW']
+print("mdb_pw:", mdb_pw)
+mdb_uri = "mongodb+srv://djelci01:{0}@omnisms-1l7x0.mongodb.net/test?retryWrites=true&w=majority".format(quote(mdb_pw))
+print("mdb_uri:", mdb_uri)
+mdb_client = MongoClient(mdb_uri)
 db = mdb_client.sessions
+
 
 @app.route("/hello")
 def hello_world():
