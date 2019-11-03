@@ -21,8 +21,32 @@ def hello_world():
 @app.route("/sms", methods=['GET', 'POST'])
 def reply_to_sms():
 
-    print(request.values.get('Body', None))
-    print("request.values:", request.values)
+    '''
+    Request format:
+
+    CombinedMultiDict([ImmutableMultiDict([]), ImmutableMultiDict([
+        ('ToCountry', 'US'), 
+        ('ToState', 'AL'), 
+        ('SmsMessageSid', 'SM6da2dd63789a40b907d283e05c6e117f'), 
+        ('NumMedia', '0'), 
+        ('ToCity', 'BRENTWOOD'), 
+        ('FromZip', '02155'), 
+        ('SmsSid', 'SM6da2dd63789a40b907d283e05c6e117f'), 
+        ('FromState', 'MA'), 
+        ('SmsStatus', 'received'), 
+        ('FromCity', 'MEDFORD'), 
+        ('Body', 'omniSMS Message 14'), 
+        ('FromCountry', 'US'), 
+        ('To', '+12568184448'), 
+        ('ToZip', '37027'), 
+        ('NumSegments', '1'), 
+        ('MessageSid', 'SM6da2dd63789a40b907d283e05c6e117f'), 
+        ('AccountSid', 'AC4f7b4dedf3f45eb446c208f8ae506b25'), 
+        ('From', '+17815393033'), 
+        ('ApiVersion', '2010-04-01')])])
+    
+    '''
+
 
     body = request.values.get('Body', None)
     from_num = request.values.get('From', None)
@@ -32,6 +56,8 @@ def reply_to_sms():
             "from" : from_num
         }
 
+
+    # distinguishing between omniSMSs and others
     if body.split(' ')[0] != "omniSMS":
 
         db.other_test.insert_one(to_insert)
