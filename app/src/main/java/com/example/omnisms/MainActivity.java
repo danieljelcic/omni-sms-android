@@ -24,7 +24,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+
+import static android.content.ContentValues.TAG;
 
 /*
 * TO-DO
@@ -99,24 +103,24 @@ public class MainActivity extends AppCompatActivity {
                     tempBinary[6] = (byte)0b11101001;
                     tempBinary[7] = (byte)0b10101010;
                     tempBinary[8] = (byte)0b00010101;
-                    byte[] binaryToGSM7 = binaryToGSM7(tempBinary);
-                    byte[] backToBinary = GSM7ToBinary(binaryToGSM7);
+                    byte[] binaryToGSM7 = Gsm7Codec.binaryToGSM7(tempBinary);
+                    byte[] backToBinary = Gsm7Codec.GSM7ToBinary(binaryToGSM7);
 
                     String tempBinaryString = "";
                     for(int i = 0; i < tempBinary.length; i ++) {
-                        tempBinaryString += byteToBinaryString(tempBinary[i]);
+                        tempBinaryString += Gsm7Codec.byteToBinaryString(tempBinary[i]);
                         tempBinaryString += " | ";
                     }
 
                     String GSM7String = "";
                     for(int i = 0; i < binaryToGSM7.length; i ++) {
-                        GSM7String += byteToBinaryString(binaryToGSM7[i]);
+                        GSM7String += Gsm7Codec.byteToBinaryString(binaryToGSM7[i]);
                         GSM7String += " | ";
                     }
 
                     String backToBinaryString = "";
                     for(int i = 0; i < backToBinary.length; i ++) {
-                        backToBinaryString += byteToBinaryString(backToBinary[i]);
+                        backToBinaryString += Gsm7Codec.byteToBinaryString(backToBinary[i]);
                         backToBinaryString += " | ";
                     }
 
@@ -124,12 +128,69 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "onClick: temp binary to GSM7: " + GSM7String);
                     Log.d(TAG, "onClick: back to binary: " + backToBinaryString);
 
+
+                    ArrayList<String> omniSMSSeq = OmniSMSClient.getOmniSMSSeqFromGSM7Arr(binaryToGSM7, 0);
+                    Log.d(TAG, "onClick: omniSMS sequence: " + omniSMSSeq.toString());
+
+                    byte[] backToGSM7FromOmniSMS = OmniSMSClient.getGSM7ArrFromOmniSMSSeq(omniSMSSeq);
+                    String backToGSM7FromOmniSMSString = "";
+                    for(int i = 0; i < binaryToGSM7.length; i ++) {
+                        backToGSM7FromOmniSMSString += Gsm7Codec.byteToBinaryString(backToGSM7FromOmniSMS[i]);
+                        backToGSM7FromOmniSMSString += " | ";
+                    }
+
+                    Log.d(TAG, "onClick: original temp binary to GSM7: " + GSM7String);
+                    Log.d(TAG, "onClick: back to GSM7 from omniSMS: " + backToGSM7FromOmniSMSString);
+
                 } else {
 
-                    byte[] binaryToGSM7 = binaryToGSM7(byteArr);
-                    byte[] backToBinary = GSM7ToBinary(binaryToGSM7);
+//                    byte[] binaryToGSM7 = Gsm7Codec.binaryToGSM7(byteArr);
+//                    Log.d(TAG, "onClick: binaryToGSM7.length: " + binaryToGSM7.length);
+//                    ArrayList<String> GSM7ToOmniSMSSeq = OmniSMSClient.getOmniSMSSeqFromGSM7Arr(binaryToGSM7, 0);
+//                    byte[] backToGSM7 = OmniSMSClient.getGSM7ArrFromOmniSMSSeq(GSM7ToOmniSMSSeq);
+//                    byte[] backToBinary = Gsm7Codec.GSM7ToBinary(backToGSM7);
+//
+//                    decodedImage.setImageBitmap(BitmapFactory.decodeByteArray(backToBinary, 0, backToBinary.length));
 
-                    decodedImage.setImageBitmap(BitmapFactory.decodeByteArray(backToBinary, 0, backToBinary.length));
+                    OmniSMSClient omniClient = OmniSMSClient.getInstance("17014013818");
+                    try {
+                        omniClient.sendFromBinary(byteArr, 0);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+//                    byte[] gsm7Arr = Gsm7Codec.binaryToGSM7(byteArr);
+//                    ArrayList<String> omniSMSSeq = OmniSMSClient.getOmniSMSSeqFromGSM7Arr(gsm7Arr, 0);
+//
+////                    SmsManager smsManager = SmsManager.getDefault();
+//                    String to = "+" + "17014013818";
+//
+//                    for (int i = 0; i < 1; i++) {
+//                        // send message
+//
+//                        String body = omniSMSSeq.get(i);
+//
+////                        smsManager.sendTextMessage(to, null, "Fuck this shit", null, null);
+//
+////                        sendSms(body, "+17014013818");
+//
+//
+//                        SmsManager smsManager = SmsManager.getDefault();
+//                        smsManager.sendTextMessage("+17014013818", null, body, null, null);
+//
+//                        Log.d(TAG, "sendFromBinary: sent message [" + i + "]: " + body);
+//
+//                        // call progress listener
+//                    }
+
+
+//                    SmsManager smsManager = SmsManager.getDefault();
+//                    smsManager.sendTextMessage("+17014013818", null, "Message X", null, null);
+//                    sendSms("Message X", "+17014013818");
+
+//                    ArrayList<String> omniSMSSeq = OmniSMSClient.getOmniSMSSeqFromGSM7Arr(binaryToGSM7, 0);
+//                    Log.d(TAG, "onClick: omniSMS sequence: " + omniSMSSeq.toString());
+
                 }
             }
         });
@@ -146,126 +207,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    String byteToBinaryString(byte toConvert) {
-        return String.format("%8s", Integer.toBinaryString(toConvert & 0xFF)).replace(' ', '0');
-    }
-
-    private String binaryToGSM7String(byte[] byteArr) {
-        return "";
-    }
-
-    private byte[] binaryToGSM7(byte[] byteArr) {
-        Toast.makeText(getApplicationContext(), "Converting binary to GSM7 bytes", Toast.LENGTH_LONG).show();
-
-        Log.d(TAG, "binaryToGSM7: started");
-        
-        int gsm7ArrSize = (byteArr.length / 7) * 8 + (byteArr.length % 7) + 1;
-        byte[] gsm7Arr = new byte[gsm7ArrSize];
-
-        for(int i = 0; i < byteArr.length; i++) {
-            byte gsm7Byte = 0;
-            byte gsm7Byte2 = 0;
-            byte first = 0;
-            byte second = 0;
-
-            Log.d(TAG, "binaryToGSM7: i = " + i + ", i % 7 = " + (i % 7));
-            switch (i % 7) {
-                case 0 :
-                    first = (byte)(0);
-                    second = (byte)((byteArr[i] & (byte)0xFE) >> 1);
-                    second = (byte)(second & 0b01111111);
-                    gsm7Byte = (byte)(first | second);
-                    gsm7Byte2 = (byte)((byteArr[i] & (byte)0x1));
-                    gsm7Byte2 = (byte)(gsm7Byte2 << 6);
-                    break;
-                case 1 :
-                    first = (byte)((byteArr[i - 1] & (byte)0x1) << 6);
-                    second = (byte)((byteArr[i] & (byte)0xFC) >> 2);
-                    second = (byte)(second & 0b00111111);
-                    gsm7Byte = (byte)(first | second);
-                    gsm7Byte2 = (byte)((byteArr[i] & (byte)0x3));
-                    gsm7Byte2 = (byte)(gsm7Byte2 << 5);
-                    break;
-                case 2 :
-                    first = (byte)((byteArr[i - 1] & (byte)0x3) << 5);
-                    second = (byte)((byteArr[i] & (byte)0xF8) >> 3);
-                    second = (byte)(second & 0b00011111);
-                    gsm7Byte = (byte)(first | second);
-                    gsm7Byte2 = (byte)((byteArr[i] & (byte)0x7));
-                    gsm7Byte2 = (byte)(gsm7Byte2 << 4);
-                    break;
-                case 3 :
-                    first = (byte)((byteArr[i - 1] & (byte)0x7) << 4);
-                    second = (byte)((byteArr[i] & (byte)0xF0) >> 4);
-                    second = (byte)(second & 0b00001111);
-                    gsm7Byte = (byte)(first | second);
-                    gsm7Byte2 = (byte)((byteArr[i] & (byte)0xF));
-                    gsm7Byte2 = (byte)(gsm7Byte2 << 3);
-                    break;
-                case 4 :
-                    first = (byte)((byteArr[i - 1] & (byte)0xF) << 3);
-                    second = (byte)((byteArr[i] & (byte)0xE0) >> 5);
-                    second = (byte)(second & 0b00000111);
-                    gsm7Byte = (byte)(first | second);
-                    gsm7Byte2 = (byte)((byteArr[i] & (byte)0x1F));
-                    gsm7Byte2 = (byte)(gsm7Byte2 << 2);
-                    break;
-                case 5 :
-                    first = (byte)((byteArr[i - 1] & (byte)0x1F) << 2);
-                    second = (byte)((byteArr[i] & (byte)0xC0) >> 6);
-                    second = (byte)(second & 0b00000011);
-                    gsm7Byte = (byte)(first | second);
-                    gsm7Byte2 = (byte)((byteArr[i] & (byte)0x3F));
-                    gsm7Byte2 = (byte)(gsm7Byte2 << 1);
-                    break;
-                case 6 :
-                    first = (byte)((byteArr[i - 1] & (byte)0x3F) << 1);
-                    second = (byte)((byteArr[i] & (byte)0x80) >> 7);
-                    second = (byte)(second & 0b00000001);
-                    gsm7Byte = (byte)(first | second);
-                    gsm7Byte2 = (byte)((byteArr[i] & (byte)0x7F));
-//                    gsm7Byte2 = (byte)(gsm7Byte2 << 0);
-                    break;
-                }
-
-                int gsm7ArrIndex = (i / 7) * 8 + (i % 7);
-                gsm7Arr[gsm7ArrIndex] = gsm7Byte;
-                gsm7Arr[gsm7ArrIndex + 1] = gsm7Byte2;
-            }
-
-        Log.d(TAG, "binaryToGSM7: returning");
-        
-            return gsm7Arr;
-        }
-
-    private byte[] GSM7ToBinary(byte[] gsm7Arr) {
-
-        Toast.makeText(getApplicationContext(), "Converting GSM7 bytes to binary", Toast.LENGTH_LONG).show();
-
-        int byteArrSize = (gsm7Arr.length / 8) * 7 + (gsm7Arr.length % 8) - 1;
-        byte[] byteArr = new byte[byteArrSize];
-
-        for(int i = 0; i < byteArr.length; i++) {
-
-            int gsm7ArrIndex = (i / 7) * 8 + (i % 7);
-            byte firstGsm7 = (byte)(gsm7Arr[gsm7ArrIndex]);
-            byte secondGsm7 = (byte)(gsm7Arr[gsm7ArrIndex + 1]);
-
-            byte[] masks = {(byte)0b01111111, (byte)0b00111111, (byte)0b00011111, (byte)0b00001111, (byte)0b00000111, (byte)0b00000011, (byte)0b00000001};
-
-            byte first = (byte)(firstGsm7 & masks[i % 7]);
-            first = (byte)(first << ((i % 7) + 1));
-            byte second = (byte)((secondGsm7 << 1) & ~(masks[i % 7]));
-            second = (byte)(second >> (7 - (i % 7)));
-            second = (byte)(second & masks[(7 - (i % 7)) - 1]);
-
-            byteArr[i] = (byte)(first | second);
-        }
-
-        Log.d(TAG, "GSM7ToBinary: returning");
-        
-        return byteArr;
-    }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
